@@ -17,12 +17,21 @@ npm run dev
 
 ## Checks
 
-Run these before pushing:
+<!-- CHECKS:START -->
+Every push and pull request runs these checks in GitHub Actions
+([`.github/workflows/checks.yml`](.github/workflows/checks.yml)), and every release has passed them.
+To run one yourself, use the same commands from the directory shown.
+
+**typecheck, test and build** (Node.js 22, from the repository root):
 
 ```bash
+npm ci
+npm run typecheck
 npm test
 npm run build
 ```
+
+<!-- CHECKS:END -->
 
 ## Before you open a pull request
 
