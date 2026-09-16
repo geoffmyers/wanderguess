@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/favicon.svg" width="96" height="96" alt="Wanderguess icon">
+  <img src="docs/icon.svg" width="96" height="96" alt="Wanderguess icon">
 </p>
 
 # Wanderguess
@@ -12,19 +12,6 @@
 [![Licence GPL-3.0-or-later](https://img.shields.io/badge/licence-GPL--3.0--or--later-blue?style=flat-square)](LICENSE.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
 <!-- BADGES:END -->
-
-## Description
-
-A party game for 1–8 players. Each turn drops you into a 360° street-level
-panorama somewhere in the world. Look around, then narrow down where you are:
-continent, then country, then state or province, then city, and finally the
-street itself.
-
-**Play it at [wanderguess.geoffmyers.com](https://wanderguess.geoffmyers.com).**
-
-It follows an earlier two-player photo-guessing game, with five scoring tiers
-instead of three, any number of players from one to eight, and imagery from
-Mapillary's public street-level collection instead of your own photo library.
 
 ## Table of Contents
 
@@ -49,6 +36,19 @@ Mapillary's public street-level collection instead of your own photo library.
 - [Credits](#credits)
 - [Contributing](#contributing)
 - [License](#license)
+
+## Description
+
+A party game for 1–8 players. Each turn drops you into a 360° street-level
+panorama somewhere in the world. Look around, then narrow down where you are:
+continent, then country, then state or province, then city, and finally the
+street itself.
+
+**Play it at [wanderguess.geoffmyers.com](https://wanderguess.geoffmyers.com).**
+
+It follows an earlier two-player photo-guessing game, with five scoring tiers
+instead of three, any number of players from one to eight, and imagery from
+Mapillary's public street-level collection instead of your own photo library.
 
 ## Screenshots
 
@@ -428,6 +428,9 @@ attribution bar must stay visible.
   **CC BY 4.0**.
 - Landmark data from [Wikidata](https://www.wikidata.org/), released under
   **CC0**.
+- The README icon is the [Font Awesome](https://fontawesome.com/) `street-view` glyph,
+  as shown for this app on [geoffmyers.com](https://www.geoffmyers.com), used under
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Built with [Next.js](https://nextjs.org/), [React](https://react.dev/),
   [Zustand](https://zustand.docs.pmnd.rs/) and
   [Vitest](https://vitest.dev/).
