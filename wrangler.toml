@@ -1,0 +1,17 @@
+name = "wanderguess"
+account_id = "7e793f1777bb69fba01518e6c38c7ec0"
+compatibility_date = "2026-01-10"
+
+# Declared here rather than clicked in the dashboard, matching lava-lamp and
+# ios-sensors. custom_domain = true makes Cloudflare create and manage the DNS
+# record for the subdomain.
+routes = [
+  { pattern = "wanderguess.geoffmyers.com", custom_domain = true }
+]
+
+[assets]
+directory = "out"
+not_found_handling = "single-page-application"
+
+[observability]
+enabled = true

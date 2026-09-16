@@ -1,0 +1,42 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# typescript incremental build artifact
+*.tsbuildinfo
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env
+.env*.local
+
+# location pool build cache (large, regenerable, holds raw API responses)
+/scripts/.pool-cache.json
+
+# GeoNames reference dumps downloaded by the pool builder
+/scripts/.geonames/
+
+# Wikidata landmark index. Derived, and the pool builder regenerates it on
+# demand, so it follows the same rule as the other scripts/. artifacts. Commit
+# it instead if you ever want a pool build pinned to one snapshot of Wikidata.
+/scripts/.landmarks.json
+.viewer-verify/

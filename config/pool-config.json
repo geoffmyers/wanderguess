@@ -1,0 +1,195 @@
+{
+  "description": "Tuning for scripts/build-location-pool.mjs. Changing the pool means editing this file, never the script.",
+  "version": "1.0.0",
+
+  "output": {
+    "manifestPath": "public/data/locations.json",
+    "cachePath": "scripts/.pool-cache.json",
+    "geonamesDir": "scripts/.geonames"
+  },
+
+  "mapillary": {
+    "graphUrl": "https://graph.mapillary.com",
+
+    "_discoveryComment": "'tiles' reads Mapillary's pre-rendered coverage tiles; 'bbox' is the older /images?bbox= path, kept as a fallback. Tiles win by an order of magnitude: one z14 tile over central Amsterdam yields 15,723 panoramas in a single request, where the best bbox query managed 263 before the server refused on data volume. Tiles are fixed-size and pre-rendered, so they never return the HTTP 500 the bbox path had to shrink-and-retry around - a tile with no coverage reports zero, which is information rather than an error.",
+    "discoveryMode": "tiles",
+    "tilesUrl": "https://tiles.mapillary.com/maps/vtp/mly1_public/2",
+    "tileZoom": 14,
+    "tileImageLayer": "image",
+    "_tileCacheComment": "Adjacent seed cities often share a tile, and a dense one is several megabytes - refetching per seed would undo the win. Bounded so a long run cannot accumulate every tile it has seen.",
+    "tileCacheSize": 40,
+
+    "imageFields": ["id", "camera_type", "captured_at", "computed_geometry", "geometry", "creator", "compass_angle", "computed_compass_angle"],
+    "_compassComment": "computed_compass_angle is Mapillary's structure-from-motion correction and is the one to trust; compass_angle is the raw device heading and is frequently a plain 0.0 where the camera recorded none. The coverage tile carries ONLY the raw value, so an easy location takes the computed one from the Graph call it already makes for the creator name. This is not a marginal difference: the Arc de Triomphe panorama reports compass_angle 0.0 against a computed 134.9, so a round baked from the raw value opened 121 degrees away from an arch that was sitting dead ahead - and rendered a perfectly ordinary Paris street while doing it.",
+    "_sequenceLayerComment": "Coverage tiles carry a 'sequence' layer of LineStrings at every zoom from 6 to 14, alongside the 'image' point layer that only exists at 14. Each sequence feature names one image_id and whether the sequence is panoramic, which makes a coarse tile a sampler for where coverage EXISTS - the thing random sampling over a region bbox cannot know. That is what the rural pass uses.",
+    "tileSequenceLayer": "sequence",
+    "requestDelayMs": 150,
+    "maxAttemptsPerAccepted": 25,
+    "imagesPerQuery": 100,
+
+    "_comment": "Candidates are found by querying a small bbox around a seeded city rather than by walking vector tiles: it needs no protobuf parser, and sampling near real cities raises the hit rate enormously over sampling a continent-sized box at random.",
+    "_boxComment": "The real constraint is NOT the documented 0.01-square-degree rule - it is a server-side data volume limit that returns HTTP 500 ('reduce the amount of data'). Density varies enormously: central Berlin fails even at 0.0003 degrees while a quiet town is fine at 0.08. So the box adapts per region - halving on a volume error, doubling when a query comes back empty - and converges on whatever that area can serve.",
+    "_panoFilterComment": "is_pano=true filters server-side and is the single biggest efficiency win available: 263 panoramas per request versus 24 unfiltered at the same box in central Amsterdam. Note camera_type=... is NOT a filter - the API silently ignores it and returns mixed types, which looks like it works. The client-side cameraTypes check below is kept as a belt-and-braces guard in case is_pano and camera_type ever disagree.",
+    "serverSidePanoFilter": true,
+
+    "initialSearchBoxDegrees": 0.01,
+    "minSearchBoxDegrees": 0.0005,
+    "maxSearchBoxDegrees": 0.08,
+    "maxProbesPerSeed": 7,
+    "jitterDegrees": 0.02
+  },
+
+  "filters": {
+    "_cameraTypeComment": "Mapillary documents the enum as perspective|fisheye|equirectangular, but live responses also return 'spherical', and it is the MORE common of the two 360 values (215 vs 58 in a 10-city sample). Filtering on 'equirectangular' alone silently discards about 79% of the usable panoramas. Both render identically in the viewer.",
+    "cameraTypes": ["equirectangular", "spherical"],
+    "minCapturedYear": 2018,
+    "minSeparationKm": 5,
+    "maxCityDistanceKm": 12,
+    "minCityPopulation": 15000,
+    "_qualityComment": "quality_score comes from the coverage tile and was not available on the bbox path at all. 0 keeps everything; raise it to bias toward sharper panoramas once the pool is large enough to afford being picky.",
+    "minQualityScore": 0,
+    "excludeCountries": []
+  },
+
+  "geocoding": {
+    "provider": "nominatim",
+    "baseUrl": "https://nominatim.openstreetmap.org/reverse",
+    "zoom": 12,
+    "rateLimitMs": 1100,
+    "userAgentApp": "wanderguess-pool-builder/1.0",
+    "verifyWithNominatim": true,
+    "_settlementComment": "Settlement keys ONLY - deliberately excluding municipality/ward/borough/suburb. Where Nominatim has no settlement it falls back to those administrative units, producing answers like 'Metsimaholo Local Municipality' or \"Ewuaso Oonkidong'i ward\". City distractors are GeoNames settlement names, so an administrative answer is the visual odd-one-out and can be picked without ever looking at the panorama. When no settlement is returned the builder falls back to the GeoNames seed city, keeping answer and distractors in one namespace.",
+    "settlementKeys": ["city", "town", "village"],
+
+    "_adminSuffixComment": "Restricting which KEYS are read is not enough: Nominatim also returns administrative names as the VALUE of a settlement key, e.g. city='Stara Pazova Municipality' where GeoNames simply says 'Stara Pazova'. Any settlement value matching these words is rejected in favour of the GeoNames seed city, so the answer stays in the same namespace as its distractors.",
+    "adminSuffixPattern": "\\b(municipalit(y|ies)|ward|district|county|borough|subdistrict|prefecture|township|commune|oblast|raion)\\b",
+    "regionKeys": ["state", "province", "region", "state_district", "county"]
+  },
+
+  "_difficultyComment": "Difficulty is decided at emit time from the data, uniformly, rather than by which pass found a location. A city-pass panorama that happens to stand under the Colosseum IS an easy location, and saying otherwise would make the field a record of how the builder ran instead of a statement about the place.",
+
+  "difficulty": {
+    "easy": {
+      "_comment": "A panorama counts as easy when a famous landmark is within THAT landmark's own visibility radius, which config/landmark-config.json sets per class - a 300 m tower reads from a kilometre, a statue has to be nearly in front of you. Proximity still is not visibility (a building can occlude anything), which is why an easy round also opens facing the landmark rather than trusting the radius alone.",
+      "targetCount": 210,
+      "maxPerCountry": 16,
+      "maxAttemptsPerAccepted": 8,
+      "_separationComment": "Landmarks cluster - central Paris holds dozens - so the pool-wide 5 km separation would allow one easy location per neighbourhood and starve the mode. Two panoramas 400 m apart facing different landmarks are different rounds.",
+      "minSeparationKm": 0.35
+    },
+
+    "medium": {
+      "_comment": "A major city with nothing iconic in it. The landmark exclusion is wider than the acceptance radius on purpose: a panorama 950 m from the Eiffel Tower still shows the Eiffel Tower, so 'just outside the easy radius' is not the same as 'no landmark'. Anything in that band falls through to hard, where an unfiltered pool is the honest place for an ambiguous case.",
+      "minCityPopulation": 250000,
+      "maxCityDistanceKm": 20,
+      "landmarkExclusionFactor": 2.0
+    },
+
+    "rural": {
+      "_comment": "What makes hard mode honestly 'anywhere'. Seeding on cities, as every other pass does, can only ever produce urban and near-urban locations - so this samples the coverage graph instead: a random coarse tile, a random panoramic sequence inside it, and wherever that lands. Coverage-weighted rather than area-weighted, which is the only sampling that is not mostly empty desert.",
+      "targetCountPerRegion": 12,
+      "sampleZoom": 8,
+      "_zoomComment": "One z8 tile spans roughly 150 km and returns thousands of sequences, so its several-megabyte download amortises over many accepted locations. Sampling at z12 instead would download less per tile and then spend most attempts on tiles with no coverage at all.",
+      "tileCacheSize": 3,
+      "maxAttemptsPerAccepted": 12,
+      "candidatesPerTile": 40,
+
+      "_cityComment": "A rural panorama still has to answer 'which city or town?', and the distractors are GeoNames settlements - so the answer has to be one too. The nearest qualifying town within maxCityDistanceKm becomes the answer, but only when it is unambiguously nearest: if the second-nearest is not at least separationRatio times further away, the question has two defensible answers and the location is dropped.",
+      "maxCityDistanceKm": 45,
+      "separationRatio": 1.6
+    }
+  },
+
+  "_streetComment": "The fifth tier asks which street the panorama was taken on - the only tier a player can SOLVE by looking around for a sign rather than reasoning from architecture and vegetation. Answer and distractors both come from OpenStreetMap, which means they share a namespace by construction; that is the problem the city tier has to work at, and here it is free.",
+
+  "street": {
+    "_languageComment": "This call sends no Accept-Language, unlike the verification call, which asks for English to match GeoNames. With `en` Nominatim answers with name:en where OSM has one while Overpass answers with the `name` tag, and the answer and its distractors end up in different namespaces - a Kyiv round offered the same street twice, once transliterated and once in Ukrainian, and marked the Ukrainian one wrong. The local name is also the right answer on its own terms: this is the tier a player solves by finding a street sign, and the sign says the local name.",
+    "_zoomComment": "A SECOND Nominatim call, not the existing one. The verification call runs at zoom 12 and returns no road at all - checked, because the design note assumed otherwise and it is wrong. Raising the existing call to 18 instead would change which settlement keys come back and quietly re-tune the city answers, so the street lookup gets its own request and the street tier costs one extra geocode per location rather than none.",
+    "nominatimZoom": 18,
+
+    "_overpassComment": "Named highway ways near the panorama. GeoNames has no street data, so this is a third external service with its own rate limit and its own failure mode - a throttled request answers with an HTML error page rather than JSON, which parses as a crash rather than as a retry unless you look for it. Several instances because they throttle independently and the main one will block an IP outright after a few hundred queries.",
+    "overpassUrls": [
+      "https://overpass.private.coffee/api/interpreter",
+      "https://overpass-api.de/api/interpreter",
+      "https://overpass.kumi.systems/api/interpreter"
+    ],
+
+    "_batchComment": "MANY locations per query, not one. A per-location `way(around:...)` took 22 seconds against 0.35 for the same area as a bbox, and 1,090 of them got this IP blocked outright before 5% of the pool was done. One query carrying a dozen bboxes returns everything at once - each way comes back with `center`, so the names are assigned back to the location they belong to here rather than by asking the server again. 45 requests instead of 1,090.",
+    "batchSize": 12,
+    "overpassTimeoutS": 180,
+    "rateLimitMs": 15000,
+    "maxRetries": 4,
+    "retryDelayMs": 60000,
+
+    "_assignComment": "A way is assigned to a location when its centre is within this multiple of the search radius. Locations are at least minSeparationKm apart, so at 2x there is no overlap between them - except among easy-mode locations, which sit as close as 350 m and genuinely do share their neighbours.",
+    "centreAssignFactor": 2,
+
+    "_radiusComment": "Escalating radii rather than one widen step, and each round only re-asks about the locations still short - the same shape as the other tiers widening from admin1 to country. Measured need: a Moscow location has exactly ONE named way inside 250 m (its own), 11 inside 700 m and 55 inside 2 km, and stopping at 700 threw away a fifth of the pool for want of a second step. A street 2 km away in the same town is still a plausible wrong answer, and the player still has to read the sign.",
+    "radiiM": [250, 700, 2000],
+    "distractorCount": 4,
+
+    "_rejectComment": "A route designation is not a street name. 'I 80', 'BR-153', 'D 1330' and a road tagged simply '3' all came back as answers, and each one sits among four named streets as the obvious odd one out - pickable without ever looking at the panorama, which is the same failure settlementKeys exists to prevent for the city tier. Eleven of 441 locations, dropped rather than shipped: a malformed answer should cost coverage, not quietly make the game easier.",
+    "rejectAnswerPattern": "^[A-Za-z]{0,3}[-\\s.]?\\d+[A-Za-z]?$"
+  },
+
+  "distractors": {
+    "count": 4,
+    "geonames": {
+      "citiesDumpUrl": "https://download.geonames.org/export/dump/cities15000.zip",
+      "admin1DumpUrl": "https://download.geonames.org/export/dump/admin1CodesASCII.txt",
+      "countryInfoUrl": "https://download.geonames.org/export/dump/countryInfo.txt"
+    },
+    "widenWhenInsufficient": true
+  },
+
+  "_regionsComment": "bbox selects candidate seed cities; the optional countries allowlist pins a region to what its name actually claims. Without it a bbox leaks - the Canada box reaches into the northern US and the Mexico/Central America box reaches into Florida, so those quotas silently fill with US locations. Regions with no allowlist are ones where bbox alone is unambiguous enough.",
+
+  "regions": [
+    { "name": "Western Europe",        "bbox": [-10.0, 36.0, 20.0, 55.0],   "targetCount": 260,
+      "countries": ["PT", "ES", "FR", "GB", "IE", "BE", "NL", "LU", "DE", "CH", "AT", "IT", "MC", "AD", "SM", "VA", "MT"] },
+    { "name": "Nordics and Baltics",   "bbox": [4.0, 54.0, 32.0, 70.0],     "targetCount": 200,
+      "countries": ["NO", "SE", "FI", "DK", "IS", "EE", "LV", "LT", "FO", "AX"] },
+    { "name": "Central Europe",        "bbox": [12.0, 44.0, 30.0, 55.0],    "targetCount": 160,
+      "countries": ["PL", "CZ", "SK", "HU", "SI", "HR", "BA", "RS", "ME", "MK", "AL", "XK"] },
+    { "name": "Eastern Europe",        "bbox": [22.0, 43.0, 41.0, 57.0],    "targetCount": 90,
+      "countries": ["UA", "BY", "MD", "RO", "BG", "RU"] },
+    { "name": "United States West",    "bbox": [-125.0, 32.0, -104.0, 49.0], "targetCount": 150,
+      "countries": ["US"] },
+    { "name": "United States Central", "bbox": [-104.0, 26.0, -90.0, 49.0],  "targetCount": 110,
+      "countries": ["US"] },
+    { "name": "United States East",    "bbox": [-90.0, 25.0, -67.0, 47.0],   "targetCount": 160,
+      "countries": ["US"] },
+    { "name": "Canada",                "bbox": [-141.0, 42.0, -52.0, 70.0],  "targetCount": 90,
+      "countries": ["CA"] },
+    { "name": "Mexico and Central America", "bbox": [-118.0, 7.0, -77.0, 33.0], "targetCount": 80,
+      "countries": ["MX", "GT", "BZ", "SV", "HN", "NI", "CR", "PA"] },
+    { "name": "Caribbean",             "bbox": [-85.0, 10.0, -59.0, 27.0],  "targetCount": 40,
+      "countries": ["CU", "DO", "HT", "JM", "PR", "TT", "BS", "BB", "LC", "GD", "VC", "AG", "KN", "DM", "AW", "CW", "SX", "VI", "VG", "KY", "TC", "GP", "MQ", "BQ", "AI", "MS", "BL", "MF"] },
+    { "name": "Brazil",                "bbox": [-74.0, -33.0, -34.0, 5.0],  "targetCount": 110,
+      "countries": ["BR"] },
+    { "name": "Southern Cone",         "bbox": [-76.0, -55.0, -53.0, -20.0], "targetCount": 70,
+      "countries": ["AR", "CL", "UY", "PY"] },
+    { "name": "Andean and Northern South America", "bbox": [-81.0, -18.0, -59.0, 12.0], "targetCount": 60,
+      "countries": ["CO", "EC", "PE", "BO", "VE", "GY", "SR", "GF"] },
+    { "name": "Japan and Korea",       "bbox": [126.0, 30.0, 146.0, 46.0],  "targetCount": 110,
+      "countries": ["JP", "KR"] },
+    { "name": "Southeast Asia",        "bbox": [95.0, -10.0, 128.0, 21.0],  "targetCount": 90,
+      "countries": ["TH", "VN", "KH", "LA", "MY", "SG", "ID", "PH", "MM", "BN", "TL"] },
+    { "name": "South Asia",            "bbox": [68.0, 6.0, 92.0, 35.0],     "targetCount": 70,
+      "countries": ["IN", "PK", "BD", "LK", "NP", "BT", "MV"] },
+    { "name": "East Asia mainland",    "bbox": [100.0, 20.0, 126.0, 45.0],  "targetCount": 50,
+      "countries": ["CN", "TW", "HK", "MO", "MN"] },
+    { "name": "Middle East",           "bbox": [34.0, 12.0, 60.0, 42.0],    "targetCount": 60,
+      "countries": ["TR", "IL", "PS", "JO", "LB", "SY", "IQ", "IR", "SA", "AE", "QA", "BH", "KW", "OM", "YE", "GE", "AM", "AZ"] },
+    { "name": "Southern Africa",       "bbox": [11.0, -35.0, 41.0, -15.0],  "targetCount": 60,
+      "countries": ["ZA", "NA", "BW", "ZW", "MZ", "ZM", "SZ", "LS", "MG", "MW", "AO"] },
+    { "name": "East Africa",           "bbox": [28.0, -12.0, 52.0, 16.0],   "targetCount": 40,
+      "countries": ["KE", "TZ", "UG", "ET", "RW", "BI", "SS", "SD", "SO", "DJ", "ER"] },
+    { "name": "West and North Africa", "bbox": [-18.0, 4.0, 36.0, 37.0],    "targetCount": 50,
+      "countries": ["MA", "DZ", "TN", "LY", "EG", "SN", "GH", "NG", "CI", "ML", "BF", "NE", "TD", "CM", "GN", "BJ", "TG", "SL", "LR", "MR", "GM", "GW", "CF", "CG", "CD", "GA", "GQ", "CV", "ST"] },
+    { "name": "Australia",             "bbox": [113.0, -44.0, 154.0, -10.0], "targetCount": 100,
+      "countries": ["AU"] },
+    { "name": "New Zealand and Pacific", "bbox": [160.0, -47.0, 180.0, -8.0], "targetCount": 40,
+      "countries": ["NZ", "FJ", "NC", "PG", "SB", "VU", "WS", "TO", "PF", "GU", "FM", "MH", "PW", "KI", "TV", "NR", "CK", "AS", "MP", "NU", "WF", "TK"] }
+  ]
+}

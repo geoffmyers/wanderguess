@@ -1,0 +1,182 @@
+{
+  "description": "Wanderguess game rules. Every rule the game enforces lives here, never as a literal in source.",
+  "version": "1.0.0",
+
+  "game": {
+    "defaultRounds": 5,
+    "roundOptions": [3, 5, 10, 15],
+    "minPlayers": 1,
+    "maxPlayers": 8,
+    "minPoolSize": 10,
+    "feedbackDurationMs": 1800,
+    "perfectRoundScore": 15
+  },
+
+  "tiers": [
+    {
+      "id": "continent",
+      "label": "Continent",
+      "question": "Which continent?",
+      "points": 1,
+      "cumulative": 1,
+      "optionSource": "fixed"
+    },
+    {
+      "id": "country",
+      "label": "Country",
+      "question": "Which country?",
+      "points": 2,
+      "cumulative": 3,
+      "optionSource": "baked"
+    },
+    {
+      "id": "region",
+      "label": "State / Province",
+      "question": "Which state or province?",
+      "points": 3,
+      "cumulative": 6,
+      "optionSource": "baked"
+    },
+    {
+      "id": "city",
+      "label": "City / Town",
+      "question": "Which city or town?",
+      "points": 4,
+      "cumulative": 10,
+      "optionSource": "baked"
+    },
+    {
+      "_comment": "The tier the 360 viewer was built for. Every other tier is reasoned out from architecture, vegetation and which side of the road the cars drive on; this one can be SOLVED by looking around for a street sign, which turns the panorama from evidence into a puzzle with the answer hidden in it.",
+      "id": "street",
+      "label": "Street",
+      "question": "Which street?",
+      "points": 5,
+      "cumulative": 15,
+      "optionSource": "baked"
+    }
+  ],
+
+  "_difficultyComment": "Difficulty is a match setting like scope, and orthogonal to it. Scores are comparable within a match and meaningless across modes - exactly the caveat that already applies to a Europe match versus a world match - so no mode awards different points. Hard is deliberately unfiltered: 'anywhere, significant or not' includes the landmarks, and filtering them out would make hard mode a smaller pool than the game had before difficulty existed.",
+
+  "difficulties": [
+    {
+      "id": "easy",
+      "label": "Easy",
+      "blurb": "A world-famous landmark is in view, and you start facing it.",
+      "poolRule": "landmark"
+    },
+    {
+      "id": "medium",
+      "label": "Medium",
+      "blurb": "A major city, with nothing iconic to give it away.",
+      "poolRule": "metro"
+    },
+    {
+      "id": "hard",
+      "label": "Hard",
+      "blurb": "Anywhere at all - a city street, a village, an empty road.",
+      "poolRule": "any"
+    }
+  ],
+
+  "defaultDifficulty": "hard",
+
+  "continents": [
+    "Africa",
+    "Antarctica",
+    "Asia",
+    "Europe",
+    "North America",
+    "Oceania",
+    "South America"
+  ],
+
+  "_viewerComment": "Auto-pan sweeps the view continuously so a player can watch a full 360 without dragging. 6 degrees a second is one revolution a minute - slow enough to read a street sign as it goes past, which is the point now that the street tier asks for one.",
+
+  "_viewerDefaultComment": "On by default (owner's call, 2026-08-14): a round should start showing the player around rather than waiting to be asked. The escape hatch is what makes that safe - any click, touch, drag or scroll hands control straight back, and the button then reads Auto-pan again. It is still suppressed for a visitor whose system asks for reduced motion; see respectsReducedMotion.",
+  "_reducedMotionComment": "prefers-reduced-motion is a visitor telling their own operating system not to animate things at them, which is a different statement from this app's default. Honouring it costs one player a sweep they can start with one button, and ignoring it means a page that moves on its own for someone who asked the whole web not to. Set false to override.",
+
+  "viewer": {
+    "autoPanDegreesPerSecond": 6,
+    "autoPanOnByDefault": true,
+    "respectsReducedMotion": true
+  },
+
+  "gamePhases": ["setup", "playing", "reveal", "victory", "pool_missing"],
+
+  "turnRules": {
+    "alternatingTurns": true,
+    "turnsPerPlayerPerRound": 1,
+    "pointsAccumulate": true,
+    "wrongAnswerEndsTurn": true,
+    "wrongAnswerKeepsAccumulatedPoints": true,
+    "uniqueLocationPerTurn": true
+  },
+
+  "victoryCondition": {
+    "type": "fixed_rounds_high_score",
+    "tiesAllowed": true,
+    "description": "Every player takes one turn per round on a different location. After the configured number of rounds the highest total wins; equal totals are reported as a shared win."
+  },
+
+  "_attributionComment": "Licence compliance, not decoration. Two of these are REQUIRED and were missing: GeoNames is CC BY 4.0 and supplies every country, region and city distractor, and OpenStreetMap is ODbL - which requires 'OpenStreetMap contributors' to be credited wherever its data appears - and now supplies every street answer and street distractor, plus the Nominatim verification behind every city and region. Both were in the pipeline long before either was on screen.",
+
+  "attribution": {
+    "author": "Geoff Myers",
+    "authorUrl": "https://www.geoffmyers.com",
+
+    "imageLicense": "CC BY-SA 4.0",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "mapillaryUrl": "https://www.mapillary.com",
+    "mapillaryProfileUrlBase": "https://www.mapillary.com/app/user/",
+
+    "geonamesLicense": "CC BY 4.0",
+    "geonamesLicenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "geonamesUrl": "https://www.geonames.org/",
+
+    "osmName": "OpenStreetMap contributors",
+    "osmUrl": "https://www.openstreetmap.org/copyright",
+    "osmLicense": "ODbL",
+    "osmLicenseUrl": "https://opendatacommons.org/licenses/odbl/",
+
+    "_sourcesComment": "The full credit list, rendered on the setup screen. The game board shows the short form, because a per-round bar has to stay out of the way of the panorama.",
+    "sources": [
+      {
+        "name": "Mapillary",
+        "url": "https://www.mapillary.com",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "what": "every street-level panorama, credited to its contributor on each round"
+      },
+      {
+        "name": "OpenStreetMap contributors",
+        "url": "https://www.openstreetmap.org/copyright",
+        "license": "ODbL",
+        "licenseUrl": "https://opendatacommons.org/licenses/odbl/",
+        "what": "street names and their alternatives, via Nominatim and the Overpass API"
+      },
+      {
+        "name": "GeoNames",
+        "url": "https://www.geonames.org/",
+        "license": "CC BY 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+        "what": "country, region and city names, and the wrong answers offered beside them"
+      },
+      {
+        "name": "Wikidata",
+        "url": "https://www.wikidata.org",
+        "license": "CC0",
+        "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "what": "the landmarks easy mode is built around"
+      }
+    ],
+
+    "_softwareComment": "Not legally required - these are permissive licences whose notices ship inside the bundle - but a page that lists its data sources and not the software it was built on is telling half the story.",
+    "software": [
+      { "name": "Next.js", "url": "https://nextjs.org", "license": "MIT" },
+      { "name": "React", "url": "https://react.dev", "license": "MIT" },
+      { "name": "Zustand", "url": "https://zustand.docs.pmnd.rs", "license": "MIT" },
+      { "name": "Vitest", "url": "https://vitest.dev", "license": "MIT" }
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "street-guessing-game",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Wanderguess - a 1-8 player party game where players guess the location of a street-level 360 panorama, scoring continent, country, region and city",
+  "author": {
+    "name": "Geoff Myers",
+    "email": "geoff@geoffmyers.com",
+    "url": "https://geoffmyers.com"
+  },
+  "license": "GPL-3.0-or-later",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "deploy": "next build && wrangler deploy",
+    "build-pool": "node scripts/build-location-pool.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "zustand": "^5.0.9"
+  },
+  "devDependencies": {
+    "@mapbox/vector-tile": "^3.0.0",
+    "@types/node": "^25.1.0",
+    "@types/react": "^19.2.10",
+    "@types/react-dom": "^19.0.2",
+    "pbf": "^5.1.2",
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.61.0"
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "description": "Which Wikidata items count as a landmark for Wanderguess easy mode, and how far away each kind stays recognisable. Read by scripts/build-landmark-index.mjs. Changing the landmark set means editing this file, never the script.",
+  "version": "1.0.0",
+
+  "output": {
+    "indexPath": "scripts/.landmarks.json"
+  },
+
+  "sparql": {
+    "endpoint": "https://query.wikidata.org/sparql",
+    "userAgentApp": "wanderguess-landmark-index/1.0",
+    "requestDelayMs": 1200,
+    "maxRetries": 3,
+    "retryDelayMs": 8000
+  },
+
+  "_sitelinksComment": "Sitelink count is the fame proxy: an item carried by 40+ language editions of Wikipedia is famous by construction, and nobody has to curate a list by hand. Raising this shrinks the index fast - 60 halves it - so it trades easy-mode pool size against how obvious the landmark is.",
+  "minSitelinks": 40,
+
+  "_classesComment": "One query per class, deliberately. A single broad root - wdt:P31/wdt:P279* wd:Q811979 (architectural structure) - is millions of items and times out the public query service every time, while the same query against a narrower class returns in seconds. Probe a candidate with scripts/probe-wikidata-classes.mjs before adding it here.",
+
+  "_radiusComment": "Visibility is not one number. A 300 m tower reads from a kilometre away; a statue has to be almost in front of you. radiusM is the distance at which THIS kind of landmark is still the obvious subject of a photograph, and it becomes the acceptance radius for easy-mode panoramas seeded on it.",
+
+  "_excludeComment": "Choosing narrow classes is not enough. 'Archaeological site' is the class that makes Pompeii and the Valley of the Kings available, and it also drags in Athens, Cairo, Damascus, Cologne and Alexandria - entire cities, each with a coordinate at its centre. Left in, every panorama downtown would become an easy location whose landmark is the city the player is being asked to name. So a second pass asks Wikidata which of the collected items are ALSO settlements or administrative units, and drops them. 'Tourist attraction' (Q570116) is excluded a simpler way: it returned spa towns like Cuxhaven alongside the London Eye, so it is not in the class list at all.",
+
+  "_excludeRootsComment": "Chosen by testing what they EXCLUDE rather than by how clean the count looked. 'Administrative territorial entity' (Q56061) and 'human-geographic territorial entity' (Q15642541) each drop the Eiffel Tower, Big Ben and the Statue of Liberty along with Athens and Cairo - Wikidata's class tree reaches those roots from almost every place-like class - and the resulting index was smaller, tidier, and missing every landmark the feature exists for. 'Human settlement' catches Athens and Cairo and spares all three.",
+
+  "excludeRoots": [
+    { "id": "Q486972", "name": "human settlement" },
+    { "id": "Q6256",   "name": "country" }
+  ],
+
+  "_keepRootComment": "Some classes are BOTH a settlement and a building. Prague Castle is a 'hillfort' and the Acropolis of Athens is an 'acropolis', and both of those are subclasses of fortified settlement - so a plain settlement exclusion takes them out along with Athens. A class that is also an architectural structure is a thing you can stand in front of, so it does not disqualify the item. 'City' is not an architectural structure, which is why Athens and Cairo still go. Machu Picchu also still goes, and that is correct: it is an Inca city, whatever else it is.",
+  "keepRoot": { "id": "Q811979", "name": "architectural structure" },
+
+  "_excludeBatchComment": "Batched with VALUES so the query starts from the known items rather than scanning the class tree, which is what keeps it inside the query service timeout.",
+  "excludeBatchSize": 200,
+
+  "_mustSurviveComment": "The exclusion's own output cannot check it: every wrong version of this rule produced an index that looked BETTER - smaller, tidier, no cities near the top - while quietly removing the landmarks the whole mode exists for. So the check is a list of things that must not be excluded, asserted by name. It deliberately only fires when one of these is EXCLUDED, never when one is simply absent: a landmark can be missing because its class is not in the list or its sitelink count is below the threshold, and that is a coverage decision rather than a filter bug.",
+
+  "_mustSurviveProvenComment": "Checked against both rules that actually failed, so this is not a guard that can only ever pass. Replayed 2026-08-13: the first attempt (item-level P31/P279* against administrative territorial entity) excludes 8 of the 16 below, including the Eiffel Tower, Big Ben and the Statue of Liberty; the second (human settlement, no keepRoot) excludes 2, Prague Castle and the Acropolis; the rule shipped here excludes none.",
+
+  "mustSurvive": [
+    { "id": "Q243",    "name": "Eiffel Tower" },
+    { "id": "Q9202",   "name": "Statue of Liberty" },
+    { "id": "Q41225",  "name": "Big Ben" },
+    { "id": "Q44440",  "name": "Golden Gate Bridge" },
+    { "id": "Q10285",  "name": "Colosseum" },
+    { "id": "Q9141",   "name": "Taj Mahal" },
+    { "id": "Q193369", "name": "Prague Castle" },
+    { "id": "Q131013", "name": "Acropolis of Athens" },
+    { "id": "Q45178",  "name": "Sydney Opera House" },
+    { "id": "Q82425",  "name": "Brandenburg Gate" },
+    { "id": "Q62378",  "name": "Tower of London" },
+    { "id": "Q212065", "name": "Edinburgh Castle" },
+    { "id": "Q79961",  "name": "Christ the Redeemer" },
+    { "id": "Q12506",  "name": "Hagia Sophia" },
+    { "id": "Q9188",   "name": "Empire State Building" },
+    { "id": "Q80290",  "name": "Forbidden City" }
+  ],
+
+  "classes": [
+    { "id": "Q12518",   "name": "tower",              "radiusM": 900 },
+    { "id": "Q11303",   "name": "skyscraper",         "radiusM": 900 },
+    { "id": "Q39715",   "name": "lighthouse",         "radiusM": 700 },
+    { "id": "Q12280",   "name": "bridge",             "radiusM": 600 },
+    { "id": "Q23413",   "name": "castle",             "radiusM": 500 },
+    { "id": "Q57821",   "name": "fortification",      "radiusM": 500 },
+    { "id": "Q2977",    "name": "cathedral",          "radiusM": 500 },
+    { "id": "Q16560",   "name": "palace",             "radiusM": 400 },
+    { "id": "Q2087181", "name": "royal residence",    "radiusM": 400 },
+    { "id": "Q16970",   "name": "church building",    "radiusM": 400 },
+    { "id": "Q32815",   "name": "mosque",             "radiusM": 400 },
+    { "id": "Q839954",  "name": "archaeological site","radiusM": 400 },
+    { "id": "Q483110",  "name": "stadium",            "radiusM": 400 },
+    { "id": "Q194195",  "name": "theme park",         "radiusM": 400 },
+    { "id": "Q44539",   "name": "temple",             "radiusM": 350 },
+    { "id": "Q22698",   "name": "park",               "radiusM": 350 },
+    { "id": "Q4989906", "name": "monument",           "radiusM": 300 },
+    { "id": "Q34627",   "name": "synagogue",          "radiusM": 300 },
+    { "id": "Q1107656", "name": "garden",             "radiusM": 300 },
+    { "id": "Q153562",  "name": "opera house",        "radiusM": 300 },
+    { "id": "Q33506",   "name": "museum",             "radiusM": 250 },
+    { "id": "Q24354",   "name": "theater building",   "radiusM": 250 },
+    { "id": "Q55488",   "name": "railway station",    "radiusM": 250 },
+    { "id": "Q174782",  "name": "square",             "radiusM": 220 },
+    { "id": "Q179700",  "name": "statue",             "radiusM": 180 },
+    { "id": "Q483453",  "name": "fountain",           "radiusM": 150 }
+  ]
+}
