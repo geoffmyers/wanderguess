@@ -20,7 +20,7 @@ export default function PoolMissingScreen() {
           Build one with a free Mapillary token:
           <br />
           <br />
-          <code>op inject -i .env.tpl -o .env</code>
+          <code>cp .env.example .env</code> (then set your token in it)
           <br />
           <code>npm run build-pool</code>
           <br />

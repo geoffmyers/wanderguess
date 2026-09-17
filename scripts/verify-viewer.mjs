@@ -146,7 +146,7 @@ const PAGE = (panoramaUrl, bearings) => `<!doctype html>
 async function main() {
   await loadEnv();
   const token = process.env.MAPILLARY_TOKEN;
-  if (!token) throw new Error('MAPILLARY_TOKEN is not set (op inject -i .env.tpl -o .env)');
+  if (!token) throw new Error('MAPILLARY_TOKEN is not set (cp .env.example .env, then set your token)');
 
   const argv = process.argv.slice(2);
   const bearingIndex = argv.indexOf('--bearings');

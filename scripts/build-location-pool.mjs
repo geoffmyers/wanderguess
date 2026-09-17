@@ -1677,7 +1677,7 @@ async function main() {
   const token = process.env.MAPILLARY_TOKEN;
   if (!token) {
     console.error(
-      'MAPILLARY_TOKEN is not set. Run `op inject -i .env.tpl -o .env`, or export it.\n' +
+      'MAPILLARY_TOKEN is not set. Run `cp .env.example .env` and set your token, or export it.\n' +
         'Create a free token at https://www.mapillary.com/dashboard/developers'
     );
     process.exit(1);

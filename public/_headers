@@ -1,0 +1,28 @@
+# Next.js App Router static export always inlines an RSC hydration payload
+# as an unhashed <script> in the document (self.__next_f.push(...)); with no
+# server to mint a per-request nonce and no build step that hashes it into
+# this file, script-src needs 'unsafe-inline'. music-ear-trainer-nextjs (the
+# other Next.js static export in this account) carries the same constraint
+# for the same reason.
+#
+# img-src allows Mapillary's image CDN, which is Meta's (graph.mapillary.com
+# returns a signed URL on a *.fbcdn.net edge, e.g. scontent-msp1-1.xx.fbcdn.net
+# - the edge subdomain varies by requester location, hence the wildcard).
+# connect-src allows graph.mapillary.com itself, called from
+# lib/mapillary/client.ts to resolve an image ID to that signed URL.
+# Verified 2026-09-17: `wrangler dev` serving this out/ with a real token,
+# a full round played in Playwright (image load, pan, reveal), zero console
+# CSP violations.
+#
+# Cloudflare Web Analytics is enabled on the zone and injects its beacon at
+# the edge (not visible under `wrangler dev`): script-src and connect-src
+# allow it, as the other geoffmyers.com sites do.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.fbcdn.net; font-src 'self'; connect-src 'self' https://graph.mapillary.com https://cloudflareinsights.com; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable

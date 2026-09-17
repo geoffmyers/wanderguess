@@ -5,7 +5,7 @@
 # Wanderguess
 
 <!-- BADGES:START -->
-![Next.js 16.1.6](https://img.shields.io/badge/Next.js-16.1.6-black?style=flat-square&logo=nextdotjs)
+![Next.js 16.3.5](https://img.shields.io/badge/Next.js-16.3.5-black?style=flat-square&logo=nextdotjs)
 ![React 19.2.4](https://img.shields.io/badge/React-19.2.4-61dafb?style=flat-square&logo=react)
 ![TypeScript 5.7.2](https://img.shields.io/badge/TypeScript-5.7.2-3178c6?style=flat-square&logo=typescript)
 ![Zustand 5.0.9](https://img.shields.io/badge/Zustand-5.0.9-443e38?style=flat-square)
@@ -418,9 +418,12 @@ attribution bar must stay visible.
 
 - Street-level imagery from [Mapillary](https://www.mapillary.com/), licensed
   **CC BY-SA 4.0**. Every panorama credits its contributor by username, linked
-  to their profile, with the licence named and linked, and Mapillary's API terms
-  separately require a visible link back to Mapillary. Both are implemented in
-  `AttributionBar`.
+  to their profile, with the licence named and linked. Mapillary's
+  [Terms of Use](https://www.mapillary.com/terms) (§11) separately require
+  visibly displaying the Mapillary logo plus a link back to Mapillary, both for
+  images and for data extracted through the API — this game does both. The
+  contributor credit, licence link and homepage link are implemented in
+  `AttributionBar`; the logo itself is not (see the known gap below).
 - Place names, streets and boundaries from
   [OpenStreetMap](https://www.openstreetmap.org/copyright) through Nominatim and
   Overpass, licensed **ODbL**.
@@ -435,10 +438,15 @@ attribution bar must stay visible.
   [Zustand](https://zustand.docs.pmnd.rs/) and
   [Vitest](https://vitest.dev/).
 
-> **Known gap:** Mapillary's brand guidance asks for its *logo*, and the
-> attribution bar currently uses a text wordmark because the official asset is
-> not included here. Adding `mapillary-logo.svg` to `public/` and rendering it in
-> `AttributionBar` would close this.
+> **Known gap:** Mapillary's Terms of Use require displaying its actual logo
+> mark, not just a text link, and this repo does not embed one — the
+> attribution bar renders "Mapillary" as a text wordmark instead. That is a
+> deliberate choice, not an oversight: Mapillary's press kit gates the real
+> logo files behind its brand guidelines, and shipping a homemade lookalike
+> would misrepresent the mark worse than a plain text link does. Closing this
+> gap means downloading the official asset from Mapillary's press kit under
+> its stated terms and adding it to `public/`, which needs a licensing call
+> this repository's automation does not make on its own.
 
 Written by Geoff Myers.
 

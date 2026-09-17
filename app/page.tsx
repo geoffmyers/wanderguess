@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import GameBoard from './components/GameBoard';
+import GitHubSourceLink from './components/GitHubSourceLink';
 import PoolMissingScreen from './components/PoolMissingScreen';
 import SetupScreen from './components/SetupScreen';
 import VictoryScreen from './components/VictoryScreen';
@@ -50,15 +51,28 @@ export default function Page() {
     );
   }
 
+  let screen;
   switch (phase) {
     case 'pool_missing':
-      return <PoolMissingScreen />;
+      screen = <PoolMissingScreen />;
+      break;
     case 'playing':
     case 'reveal':
-      return <GameBoard />;
+      screen = <GameBoard />;
+      break;
     case 'victory':
-      return <VictoryScreen />;
+      screen = <VictoryScreen />;
+      break;
     default:
-      return <SetupScreen />;
+      screen = <SetupScreen />;
   }
+
+  // Rendered once here, outside the switch, so it shows on every phase
+  // without being duplicated into each screen component.
+  return (
+    <>
+      {screen}
+      <GitHubSourceLink />
+    </>
+  );
 }

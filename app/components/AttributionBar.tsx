@@ -11,8 +11,13 @@ interface Props {
  * Licence compliance, not decoration.
  *
  * Mapillary imagery is CC BY-SA 4.0, which requires crediting the contributor
- * with a link, and Mapillary's API terms separately require a visible link back
- * to their homepage wherever their data is used.
+ * with a link. Mapillary's Terms of Use (Section 11) separately require
+ * visibly displaying the Mapillary *logo* (not merely a text link) plus a
+ * link back to Mapillary, both for individual images and for data extracted
+ * via the API - this game uses both. The contributor credit and licence link
+ * are fully implemented; the logo is a text wordmark ("Mapillary" below)
+ * rather than the official mark, a known gap documented in the README rather
+ * than papered over with a homemade lookalike.
  *
  * OpenStreetMap is here because ODbL requires it wherever OSM-derived data
  * appears, and the round on screen is full of it: the street being asked about,

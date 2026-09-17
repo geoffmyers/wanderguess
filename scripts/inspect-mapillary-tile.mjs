@@ -48,7 +48,7 @@ function lonLatToTile(lon, lat, z) {
 await loadEnv();
 const token = process.env.MAPILLARY_TOKEN;
 if (!token) {
-  console.error('MAPILLARY_TOKEN is not set. Run `op inject -i .env.tpl -o .env`.');
+  console.error('MAPILLARY_TOKEN is not set. Run `cp .env.example .env` and set your token.');
   process.exit(1);
 }
 

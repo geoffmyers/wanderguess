@@ -29,7 +29,7 @@ export async function resolveImageUrl(
   const token = process.env.NEXT_PUBLIC_MAPILLARY_TOKEN;
   if (!token) {
     throw new MapillaryError(
-      'NEXT_PUBLIC_MAPILLARY_TOKEN is not set - generate .env from .env.tpl'
+      'NEXT_PUBLIC_MAPILLARY_TOKEN is not set - cp .env.example to .env and set your token'
     );
   }
 

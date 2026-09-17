@@ -301,6 +301,10 @@ a {
   justify-content: space-between;
   gap: 12px;
   padding: 10px 16px;
+  /* Left padding reserves room for the fixed GitHub source-link badge in the
+     top-left corner so it never sits on top of the round counter. Matches
+     the badge's own icon-only vs. icon+text breakpoint below. */
+  padding-left: 186px;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -908,4 +912,68 @@ a {
 
 .credits a:hover {
   color: var(--accent);
+}
+
+/* ---------- github source link ---------- */
+
+/*
+ * Owner directive: shown on every screen, so it is rendered once in
+ * page.tsx rather than per screen component - the four phases share no
+ * persistent layout, so this has to float above whichever one is active.
+ * Top-left, above the safe area: GameBoard's header occupies the top strip
+ * corners (round counter left, End match button right) but with a visible
+ * gap before its text starts, and this sits above the viewer/attribution/
+ * auto-pan cluster which all live lower on the board. z-index above
+ * .overlay (50) so it stays visible during the reveal / victory dialog too.
+ */
+.github-source-link {
+  position: fixed;
+  top: calc(var(--sat) + 8px);
+  left: calc(var(--sal) + 8px);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 8px;
+  border-radius: 999px;
+  background: rgba(5, 8, 15, 0.72);
+  border: 1px solid rgba(230, 237, 247, 0.22);
+  color: rgba(230, 237, 247, 0.85);
+  font-size: 0.72rem;
+  line-height: 1.2;
+  text-decoration: none;
+  backdrop-filter: blur(4px);
+  transition: all 0.15s;
+}
+
+.github-source-link:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.github-source-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.github-source-link svg {
+  flex: 0 0 auto;
+}
+
+/* The label is the first thing to go on a narrow phone header; the icon alone
+   still reaches the repo, matching the auto-pan button's own breakpoint. */
+@media (max-width: 420px) {
+  .github-source-link span {
+    display: none;
+  }
+
+  .github-source-link {
+    padding: 6px;
+  }
+
+  /* The icon-only badge is much narrower, so the board header needs far less
+     reserved space to stay clear of it. */
+  .board-header {
+    padding-left: 48px;
+  }
 }

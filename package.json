@@ -20,7 +20,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "next": "^16.1.6",
+    "next": "^16.3.5",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "zustand": "^5.0.9"
@@ -32,7 +32,7 @@
     "@types/react-dom": "^19.0.2",
     "pbf": "^5.1.2",
     "typescript": "^5.7.2",
-    "vitest": "^3.2.4",
-    "wrangler": "^4.61.0"
+    "vitest": "^4.1.11",
+    "wrangler": "^4.133.0"
   }
 }
